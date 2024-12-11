@@ -2,7 +2,6 @@ package com.workfall.jwt_checking.service;
 
 import com.workfall.jwt_checking.document.AppUser;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
-public class JwtService {
+public class JwtService  {
 
     @Value("${jwt.secret.key}")
     private String jwtKey ;
