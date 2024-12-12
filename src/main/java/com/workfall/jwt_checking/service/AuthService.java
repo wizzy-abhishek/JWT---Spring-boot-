@@ -1,9 +1,11 @@
 package com.workfall.jwt_checking.service;
 
 import com.workfall.jwt_checking.document.AppUser;
+import com.workfall.jwt_checking.document.Login;
 import com.workfall.jwt_checking.dto.AppUserDTO;
 import com.workfall.jwt_checking.dto.SignUpDTO;
 import com.workfall.jwt_checking.repo.AppUserRepo;
+import com.workfall.jwt_checking.repo.LoginRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +21,7 @@ public class AuthService implements UserDetailsService {
 
     private final AppUserRepo appUserRepo ;
     private final PasswordEncoder passwordEncoder ;
+    private final LoginRepo loginRepo;
 
     @Override
     public UserDetails loadUserByUsername(String username){
@@ -40,8 +43,10 @@ public class AuthService implements UserDetailsService {
         }
 
         AppUser toBeCreatedUser = returnAppUserEntity(signUpDTO);
+        Login login = returnLoginEntity(signUpDTO);
+        login.setPassword(passwordEncoder.encode(login.getPassword()));
         toBeCreatedUser.setPassword(passwordEncoder.encode(toBeCreatedUser.getPassword()));
-
+        loginRepo.save(login);
         AppUser savingUser = appUserRepo.save(toBeCreatedUser);
         return returnAppUserDTO(savingUser);
 
@@ -65,5 +70,12 @@ public class AuthService implements UserDetailsService {
         appUserDTO.setPassword(appUserDTO.getPassword());
 
         return appUserDTO ;
+    }
+
+    private Login returnLoginEntity(SignUpDTO signUpDTO) {
+        Login login = new Login();
+        login.setEmail(signUpDTO.getEmail());
+        login.setPassword(signUpDTO.getPassword());
+        return login ;
     }
 }

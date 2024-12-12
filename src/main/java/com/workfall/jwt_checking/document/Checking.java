@@ -13,5 +13,4 @@ public class Checking {
     @Id
     private String id ;
 
-
 }

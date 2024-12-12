@@ -8,12 +8,15 @@ import com.workfall.jwt_checking.service.AuthLoginService;
 import com.workfall.jwt_checking.service.AuthService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/auth")
@@ -35,6 +38,14 @@ public class AuthController{
         cookie.setHttpOnly(true);
         httpServletResponse.addCookie(cookie);
         return ResponseEntity.ok(loginResponseDTO);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logOut(HttpServletRequest request){
+        String token = Arrays.stream(request.getCookies())
+                .filter(cookie -> "jwtToken".equals(cookie.getName()))
+                .findFirst().toString();
+        return ResponseEntity.ok(authLoginService.logout(token));
     }
 
 }
