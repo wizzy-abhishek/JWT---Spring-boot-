@@ -16,6 +16,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class CustomSecurityConfig {
 
+    private static final String[] PUBLIC_ROUTES ={
+            "/error",
+            "/auth/**" ,
+            "/main-controller/unauthorized-api"
+    };
+
     private final JwtFilter jwtFilter ;
 
     @Bean
@@ -27,7 +33,8 @@ public class CustomSecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter , UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(requests -> requests
-                        .anyRequest().permitAll());
+                        .requestMatchers(PUBLIC_ROUTES).permitAll()
+                        .anyRequest().authenticated());
 
         return httpSecurity.build();
     }

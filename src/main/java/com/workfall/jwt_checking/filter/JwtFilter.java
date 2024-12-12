@@ -1,6 +1,8 @@
 package com.workfall.jwt_checking.filter;
 
 import com.workfall.jwt_checking.document.AppUser;
+import com.workfall.jwt_checking.document.UserPrincipal;
+import com.workfall.jwt_checking.repo.UserPrincipalRepo;
 import com.workfall.jwt_checking.service.AuthService;
 import com.workfall.jwt_checking.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -9,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -26,6 +29,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver handlerExceptionResolver ;
+    private final UserPrincipalRepo userPrincipalRepo;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -43,9 +47,11 @@ public class JwtFilter extends OncePerRequestFilter {
             String email = jwtService.getUserFromToken(token);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                AppUser user = authService.findUserByEmail(email);
+                AppUser appUser = authService.findUserByEmail(email);
+                UserPrincipal userPrincipal = userPrincipalRepo.findByAppUser(appUser)
+                        .orElseThrow(() -> new BadCredentialsException("Not found"));
                 UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
                 authenticationToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );

@@ -13,8 +13,6 @@ public class Login {
     @Id
     private String email ;
 
-    private String password ;
-
     private String jwtToken ;
 
 }

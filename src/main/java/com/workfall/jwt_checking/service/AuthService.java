@@ -2,10 +2,12 @@ package com.workfall.jwt_checking.service;
 
 import com.workfall.jwt_checking.document.AppUser;
 import com.workfall.jwt_checking.document.Login;
+import com.workfall.jwt_checking.document.UserPrincipal;
 import com.workfall.jwt_checking.dto.AppUserDTO;
 import com.workfall.jwt_checking.dto.SignUpDTO;
 import com.workfall.jwt_checking.repo.AppUserRepo;
 import com.workfall.jwt_checking.repo.LoginRepo;
+import com.workfall.jwt_checking.repo.UserPrincipalRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,13 +23,17 @@ public class AuthService implements UserDetailsService {
 
     private final AppUserRepo appUserRepo ;
     private final PasswordEncoder passwordEncoder ;
-    private final LoginRepo loginRepo;
+    private final LoginRepo loginRepo ;
+    private final UserPrincipalRepo userPrincipalRepo;
 
     @Override
-    public UserDetails loadUserByUsername(String username){
-        return appUserRepo.findByEmailIgnoreCase(username)
+    public UserDetails loadUserByUsername(String username) {
+        AppUser appUser = appUserRepo.findByEmailIgnoreCase(username)
                 .orElseThrow(() -> new BadCredentialsException("User with Email : " + username + " not found"));
+
+        return new UserPrincipal(appUser);
     }
+
 
     public AppUser findUserByEmail(String email){
         return appUserRepo.findByEmailIgnoreCase(email)
@@ -44,7 +50,6 @@ public class AuthService implements UserDetailsService {
 
         AppUser toBeCreatedUser = returnAppUserEntity(signUpDTO);
         Login login = returnLoginEntity(signUpDTO);
-        login.setPassword(passwordEncoder.encode(login.getPassword()));
         toBeCreatedUser.setPassword(passwordEncoder.encode(toBeCreatedUser.getPassword()));
         loginRepo.save(login);
         AppUser savingUser = appUserRepo.save(toBeCreatedUser);
@@ -57,8 +62,8 @@ public class AuthService implements UserDetailsService {
 
         appUser.setEmail(signUpDTO.getEmail());
         appUser.setPassword(signUpDTO.getPassword());
-        appUser.setAccExpired(false);
-        appUser.setAccLocked(false);
+        appUser.setAccountExpired(false);
+        appUser.setAccountLocked(false);
 
         return appUser ;
     }
@@ -75,7 +80,6 @@ public class AuthService implements UserDetailsService {
     private Login returnLoginEntity(SignUpDTO signUpDTO) {
         Login login = new Login();
         login.setEmail(signUpDTO.getEmail());
-        login.setPassword(signUpDTO.getPassword());
         return login ;
     }
 }
