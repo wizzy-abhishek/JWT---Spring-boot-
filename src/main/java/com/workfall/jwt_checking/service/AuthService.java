@@ -61,6 +61,8 @@ public class AuthService implements UserDetailsService {
     private AppUserDTO returnAppUserDTO(AppUser appUser){
         AppUserDTO appUserDTO = new AppUserDTO();
 
+        appUserDTO.setEmail(appUser.getEmail());
+        appUserDTO.setPassword(appUserDTO.getPassword());
 
         return appUserDTO ;
     }
