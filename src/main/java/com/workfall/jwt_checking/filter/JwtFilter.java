@@ -1,8 +1,9 @@
 package com.workfall.jwt_checking.filter;
 
 import com.workfall.jwt_checking.document.AppUser;
+import com.workfall.jwt_checking.document.Tokens;
 import com.workfall.jwt_checking.document.UserPrincipal;
-import com.workfall.jwt_checking.repo.UserPrincipalRepo;
+import com.workfall.jwt_checking.repo.TokenRepo;
 import com.workfall.jwt_checking.service.AuthService;
 import com.workfall.jwt_checking.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -29,37 +30,58 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver handlerExceptionResolver ;
-    private final UserPrincipalRepo userPrincipalRepo;
+    private final TokenRepo tokenRepo;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) {
         try {
-            final String requestToken = request.getHeader("Authorization");
+            final String authorizationHeader = request.getHeader("Authorization");
 
-            if (requestToken == null || !requestToken.startsWith("Bearer")) {
-                filterChain.doFilter(request, response);
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Missing or invalid Authorization header.");
                 return;
             }
 
-            String token = requestToken.split("Bearer ")[1];
-            String email = jwtService.getUserFromToken(token);
+            String token = authorizationHeader.substring(7);
+
+            String email;
+            try {
+                email = jwtService.getUserFromToken(token);
+            } catch (Exception e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Invalid JWT token.");
+                return;
+            }
+
+            if (isTokenRevoked(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("JWT token has been revoked.");
+                return;
+            }
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 AppUser appUser = authService.findUserByEmail(email);
-                UserPrincipal userPrincipal = userPrincipalRepo.findByAppUser(appUser)
-                        .orElseThrow(() -> new BadCredentialsException("Not found"));
+                UserPrincipal userPrincipal = new UserPrincipal(appUser);
+
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
-                authenticationToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
+
             filterChain.doFilter(request, response);
-        }catch(Exception e){
-            handlerExceptionResolver.resolveException(request , response , null , e);
+        } catch (Exception e) {
+            handlerExceptionResolver.resolveException(request, response, null, e);
         }
     }
+
+    private boolean isTokenRevoked(String token) {
+        Tokens tokenEntity = tokenRepo.findByJwtToken(token);
+        return tokenEntity == null || tokenEntity.isRevoked();
+    }
+
 }

@@ -1,13 +1,13 @@
 package com.workfall.jwt_checking.service;
 
 import com.workfall.jwt_checking.document.AppUser;
-import com.workfall.jwt_checking.document.Login;
+import com.workfall.jwt_checking.document.TokenMapping;
 import com.workfall.jwt_checking.document.UserPrincipal;
 import com.workfall.jwt_checking.dto.AppUserDTO;
 import com.workfall.jwt_checking.dto.SignUpDTO;
 import com.workfall.jwt_checking.repo.AppUserRepo;
-import com.workfall.jwt_checking.repo.LoginRepo;
-import com.workfall.jwt_checking.repo.UserPrincipalRepo;
+import com.workfall.jwt_checking.repo.TokenMappingRepo;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,16 +15,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class AuthService implements UserDetailsService {
 
     private final AppUserRepo appUserRepo ;
     private final PasswordEncoder passwordEncoder ;
-    private final LoginRepo loginRepo ;
-    private final UserPrincipalRepo userPrincipalRepo;
+    private final TokenMappingRepo tokenMappingRepo ;
+
 
     @Override
     public UserDetails loadUserByUsername(String username) {
@@ -42,17 +40,20 @@ public class AuthService implements UserDetailsService {
 
     public AppUserDTO signUp(SignUpDTO signUpDTO){
 
-        Optional<AppUser> user = appUserRepo.findByEmailIgnoreCase(signUpDTO.getEmail());
+        AppUser user = appUserRepo.findByEmailIgnoreCase(signUpDTO.getEmail())
+                .orElse(null);
 
-        if (user.isPresent()){
+        if (user != null){
             throw new BadCredentialsException("Email already present " + signUpDTO.getEmail());
         }
 
         AppUser toBeCreatedUser = returnAppUserEntity(signUpDTO);
-        Login login = returnLoginEntity(signUpDTO);
+        TokenMapping tokenMapping = returnTokenMapping(signUpDTO);
+
         toBeCreatedUser.setPassword(passwordEncoder.encode(toBeCreatedUser.getPassword()));
-        loginRepo.save(login);
+
         AppUser savingUser = appUserRepo.save(toBeCreatedUser);
+        tokenMappingRepo.save(tokenMapping);
         return returnAppUserDTO(savingUser);
 
     }
@@ -72,14 +73,14 @@ public class AuthService implements UserDetailsService {
         AppUserDTO appUserDTO = new AppUserDTO();
 
         appUserDTO.setEmail(appUser.getEmail());
-        appUserDTO.setPassword(appUserDTO.getPassword());
+        appUserDTO.setPassword(appUser.getPassword());
 
         return appUserDTO ;
     }
 
-    private Login returnLoginEntity(SignUpDTO signUpDTO) {
-        Login login = new Login();
-        login.setEmail(signUpDTO.getEmail());
-        return login ;
+    private TokenMapping returnTokenMapping(SignUpDTO signUpDTO){
+        TokenMapping tokenMapping = new TokenMapping();
+        tokenMapping.setEmail(signUpDTO.getEmail());
+        return tokenMapping ;
     }
 }

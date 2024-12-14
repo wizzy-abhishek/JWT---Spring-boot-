@@ -21,15 +21,16 @@ public class JwtService  {
         return Keys.hmacShaKeyFor(jwtKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(AppUser appUser){
+    public String generateAccessToken(AppUser appUser) {
+
         return Jwts.builder()
                 .subject(appUser.getEmail())
-                .claim("Roles" , appUser.getRoles())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000*60*60))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 60 mins
                 .signWith(getSecretKey())
                 .compact();
     }
+
 
     public String getUserFromToken(String token){
 
@@ -40,5 +41,16 @@ public class JwtService  {
                 .getPayload();
 
         return claims.getSubject() ;
+    }
+
+    public Date getTokenExpireTime(String token) {
+
+        Claims claims = Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getExpiration();
     }
 }

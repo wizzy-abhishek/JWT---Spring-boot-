@@ -15,4 +15,10 @@ public class MainController {
     public ResponseEntity<String> unauthorizedAPI(){
         return ResponseEntity.ok("MY NAME IS JOHN CENA");
     }
+
+    @GetMapping("/authorized-api")
+    public ResponseEntity<String> authorizedAPI(){
+        return ResponseEntity.ok("I am authorized");
+    }
+
 }
