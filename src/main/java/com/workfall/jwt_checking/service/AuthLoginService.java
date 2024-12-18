@@ -1,6 +1,6 @@
 package com.workfall.jwt_checking.service;
 
-import com.workfall.jwt_checking.document.AppUser;
+import com.workfall.jwt_checking.entity.AppUser;
 import com.workfall.jwt_checking.document.TokenMapping;
 import com.workfall.jwt_checking.document.Tokens;
 import com.workfall.jwt_checking.document.UserPrincipal;
@@ -8,9 +8,7 @@ import com.workfall.jwt_checking.dto.LoginDTO;
 import com.workfall.jwt_checking.dto.LoginResponseDTO;
 import com.workfall.jwt_checking.repo.TokenMappingRepo;
 import com.workfall.jwt_checking.repo.TokenRepo;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,12 +37,11 @@ public class AuthLoginService {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         AppUser appUser = userPrincipal.getAppUser();
 
-        revokeAllTokensOfAnUser(appUser);
-
         String token = jwtService.generateAccessToken(appUser);
         Tokens savedToken = tokenRepo.save(returnNewToken(token));
 
-        TokenMapping tokenMapping = tokenMappingRepo.findByEmailIgnoreCase(appUser.getEmail());
+        TokenMapping tokenMapping = tokenMappingRepo
+                .findByEmailIgnoreCase(appUser.getEmail());
         tokenMapping.getTokens().add(savedToken);
 
         tokenMappingRepo.save(tokenMapping);
@@ -56,15 +53,15 @@ public class AuthLoginService {
 
         Tokens tokenFetched = tokenRepo.findByJwtToken(token);
 
-        if (tokenFetched == null || tokenFetched.isRevoked()) {
+        if (tokenFetched == null || !tokenRepo.existsById(tokenFetched.getJwtToken())) {
             throw new BadCredentialsException("Invalid or already revoked token");
         }
 
-        tokenFetched.setRevoked(true);
-        tokenRepo.save(tokenFetched);
+        tokenRepo.delete(tokenFetched);
 
     }
-    private void revokeAllTokensOfAnUser(AppUser appUser ){
+
+    /*private void revokeAllTokensOfAnUser(AppUser appUser ){
         TokenMapping tokenMapping = tokenMappingRepo
                 .findByEmailIgnoreCase(appUser.getEmail());
 
@@ -80,7 +77,7 @@ public class AuthLoginService {
         });
         tokenRepo.saveAll(tokens);
         tokenMappingRepo.save(tokenMapping);
-    }
+    }*/
 
     public String extractTokenFromHeader(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -94,8 +91,6 @@ public class AuthLoginService {
         Tokens tokens = new Tokens();
 
         tokens.setJwtToken(token);
-        tokens.setRevoked(false);
-        tokens.setExpirationTime(jwtService.getTokenExpireTime(token));
 
         return tokens ;
     }

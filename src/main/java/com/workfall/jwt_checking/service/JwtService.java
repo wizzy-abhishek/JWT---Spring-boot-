@@ -1,6 +1,6 @@
 package com.workfall.jwt_checking.service;
 
-import com.workfall.jwt_checking.document.AppUser;
+import com.workfall.jwt_checking.entity.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -43,14 +43,4 @@ public class JwtService  {
         return claims.getSubject() ;
     }
 
-    public Date getTokenExpireTime(String token) {
-
-        Claims claims = Jwts.parser()
-                .verifyWith(getSecretKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.getExpiration();
-    }
 }

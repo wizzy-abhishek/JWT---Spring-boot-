@@ -1,6 +1,8 @@
 package com.workfall.jwt_checking.service;
 
-import com.workfall.jwt_checking.document.AppUser;
+import com.workfall.jwt_checking.document.Tokens;
+import com.workfall.jwt_checking.dto.LoginResponseDTO;
+import com.workfall.jwt_checking.entity.AppUser;
 import com.workfall.jwt_checking.document.TokenMapping;
 import com.workfall.jwt_checking.document.UserPrincipal;
 import com.workfall.jwt_checking.dto.AppUserDTO;
@@ -8,6 +10,7 @@ import com.workfall.jwt_checking.dto.SignUpDTO;
 import com.workfall.jwt_checking.repo.AppUserRepo;
 import com.workfall.jwt_checking.repo.TokenMappingRepo;
 
+import com.workfall.jwt_checking.repo.TokenRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +25,8 @@ public class AuthService implements UserDetailsService {
     private final AppUserRepo appUserRepo ;
     private final PasswordEncoder passwordEncoder ;
     private final TokenMappingRepo tokenMappingRepo ;
+    private final JwtService jwtService ;
+    private final TokenRepo tokenRepo;
 
 
     @Override
@@ -38,7 +43,7 @@ public class AuthService implements UserDetailsService {
                 .orElseThrow(()-> new BadCredentialsException("User with email : " + email + " not found")) ;
     }
 
-    public AppUserDTO signUp(SignUpDTO signUpDTO){
+    public LoginResponseDTO signUp(SignUpDTO signUpDTO){
 
         AppUser user = appUserRepo.findByEmailIgnoreCase(signUpDTO.getEmail())
                 .orElse(null);
@@ -48,13 +53,22 @@ public class AuthService implements UserDetailsService {
         }
 
         AppUser toBeCreatedUser = returnAppUserEntity(signUpDTO);
-        TokenMapping tokenMapping = returnTokenMapping(signUpDTO);
+        TokenMapping generateTokenMapping = returnTokenMapping(signUpDTO);
 
         toBeCreatedUser.setPassword(passwordEncoder.encode(toBeCreatedUser.getPassword()));
 
         AppUser savingUser = appUserRepo.save(toBeCreatedUser);
+        tokenMappingRepo.save(generateTokenMapping);
+
+        String token = jwtService.generateAccessToken(savingUser);
+        Tokens savedToken = tokenRepo.save(returnNewToken(token));
+
+        TokenMapping tokenMapping = tokenMappingRepo
+                .findByEmailIgnoreCase(savingUser.getEmail());
+        tokenMapping.getTokens().add(savedToken);
+
         tokenMappingRepo.save(tokenMapping);
-        return returnAppUserDTO(savingUser);
+        return new LoginResponseDTO(token);
 
     }
 
@@ -63,6 +77,7 @@ public class AuthService implements UserDetailsService {
 
         appUser.setEmail(signUpDTO.getEmail());
         appUser.setPassword(signUpDTO.getPassword());
+        appUser.setRoles(signUpDTO.getRoles());
         appUser.setAccountExpired(false);
         appUser.setAccountLocked(false);
 
@@ -73,7 +88,6 @@ public class AuthService implements UserDetailsService {
         AppUserDTO appUserDTO = new AppUserDTO();
 
         appUserDTO.setEmail(appUser.getEmail());
-        appUserDTO.setPassword(appUser.getPassword());
 
         return appUserDTO ;
     }
@@ -82,5 +96,11 @@ public class AuthService implements UserDetailsService {
         TokenMapping tokenMapping = new TokenMapping();
         tokenMapping.setEmail(signUpDTO.getEmail());
         return tokenMapping ;
+    }
+
+    private Tokens returnNewToken(String token){
+        Tokens tokens = new Tokens();
+        tokens.setJwtToken(token);
+        return tokens ;
     }
 }

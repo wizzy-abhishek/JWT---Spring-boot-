@@ -1,18 +1,17 @@
 package com.workfall.jwt_checking.filter;
 
-import com.workfall.jwt_checking.document.AppUser;
-import com.workfall.jwt_checking.document.Tokens;
+import com.workfall.jwt_checking.entity.AppUser;
 import com.workfall.jwt_checking.document.UserPrincipal;
 import com.workfall.jwt_checking.repo.TokenRepo;
 import com.workfall.jwt_checking.service.AuthService;
 import com.workfall.jwt_checking.service.JwtService;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -20,28 +19,30 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import java.io.IOException;
+
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService ;
-    private final AuthService authService ;
+    private final JwtService jwtService;
+    private final AuthService authService;
+    private final TokenRepo tokenRepo;
 
     @Autowired
     @Qualifier("handlerExceptionResolver")
-    private HandlerExceptionResolver handlerExceptionResolver ;
-    private final TokenRepo tokenRepo;
+    private HandlerExceptionResolver handlerExceptionResolver;
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) {
+                                    FilterChain filterChain) throws IOException, ServletException {
         try {
             final String authorizationHeader = request.getHeader("Authorization");
 
             if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Missing or invalid Authorization header.");
+                filterChain.doFilter(request, response);
                 return;
             }
 
@@ -56,9 +57,9 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            if (isTokenRevoked(token)) {
+            if (!isTokenPresent(token)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("JWT token has been revoked.");
+                response.getWriter().write("Session finished");
                 return;
             }
 
@@ -79,9 +80,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
     }
 
-    private boolean isTokenRevoked(String token) {
-        Tokens tokenEntity = tokenRepo.findByJwtToken(token);
-        return tokenEntity == null || tokenEntity.isRevoked();
+    private boolean isTokenPresent(String token) {
+        return tokenRepo.existsById(token);
     }
-
 }

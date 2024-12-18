@@ -28,12 +28,12 @@ public class AuthController {
     private final AuthLoginService authLoginService;
 
     @PostMapping("/signUp")
-    public ResponseEntity<AppUserDTO> signUp(@RequestBody SignUpDTO signUpDTO) {
+    public ResponseEntity<LoginResponseDTO> signUp(@RequestBody SignUpDTO signUpDTO) {
         return ResponseEntity.ok(authService.signUp(signUpDTO));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO loginDTO, HttpServletResponse httpServletResponse) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO loginDTO) {
         LoginResponseDTO loginResponseDTO = authLoginService.login(loginDTO);
         return ResponseEntity.ok(loginResponseDTO);
     }

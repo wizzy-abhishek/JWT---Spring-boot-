@@ -1,12 +1,13 @@
 package com.workfall.jwt_checking.config;
 
+import com.workfall.jwt_checking.enums.Roles;
 import com.workfall.jwt_checking.filter.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,26 +18,28 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@EnableMethodSecurity(securedEnabled = true)
 public class CustomSecurityConfig {
 
-    private static final String[] PUBLIC_ROUTES ={
+    private static final String[] PUBLIC_ROUTES = {
             "/error",
-            "/auth/**" ,
+            "/auth/signUp",
+            "/auth/login",
             "/main-controller/unauthorized-api"
     };
 
-    private final JwtFilter jwtFilter ;
+    private final JwtFilter jwtFilter;
 
     @Bean
     SecurityFilterChain customSecurity(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sessionManagement -> sessionManagement
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter , UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(PUBLIC_ROUTES).permitAll()
-                        .anyRequest().authenticated());
+                        .anyRequest().authenticated())
+                .sessionManagement(sessionManagement -> sessionManagement
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
     }
@@ -45,5 +48,4 @@ public class CustomSecurityConfig {
     AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
 }

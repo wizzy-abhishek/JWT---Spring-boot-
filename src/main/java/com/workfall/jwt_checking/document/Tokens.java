@@ -14,8 +14,4 @@ public class Tokens {
 
     @Id
     private String jwtToken ;
-
-    private Date expirationTime ;
-
-    private boolean revoked ;
 }
