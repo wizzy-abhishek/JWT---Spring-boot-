@@ -12,9 +12,6 @@ public class MasterRoleService {
 
     private final MasterRoleRepo masterRoleRepo;
 
-    /**
-     * Creates default master roles (ADMIN and USER) if they do not exist.
-     */
     public void initializeMasterRoles() {
         if (masterRoleRepo.findByRoles(Roles.ADMIN).isEmpty()) {
             MasterRole adminRole = new MasterRole();
@@ -31,12 +28,6 @@ public class MasterRoleService {
         }
     }
 
-    /**
-     * Finds a master role by its enum value.
-     *
-     * @param role the role to find.
-     * @return the master role.
-     */
     public MasterRole findMasterRole(Roles role) {
         return masterRoleRepo.findByRoles(role)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found: " + role.name()));

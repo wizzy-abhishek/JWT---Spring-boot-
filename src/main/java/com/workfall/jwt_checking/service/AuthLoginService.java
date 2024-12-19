@@ -3,7 +3,7 @@ package com.workfall.jwt_checking.service;
 import com.workfall.jwt_checking.entity.AppUser;
 import com.workfall.jwt_checking.document.TokenMapping;
 import com.workfall.jwt_checking.document.Tokens;
-import com.workfall.jwt_checking.document.UserPrincipal;
+import com.workfall.jwt_checking.user.UserPrincipal;
 import com.workfall.jwt_checking.dto.LoginDTO;
 import com.workfall.jwt_checking.dto.LoginResponseDTO;
 import com.workfall.jwt_checking.repo.TokenMappingRepo;
@@ -16,8 +16,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Slf4j
 @Service

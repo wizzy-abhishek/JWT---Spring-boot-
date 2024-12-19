@@ -20,7 +20,9 @@ public class AppUser {
 
     private String password ;
 
-    @OneToMany
+    @OneToMany(mappedBy = "appUser" ,
+            fetch = FetchType.EAGER ,
+            cascade = CascadeType.ALL)
     private List<UserRole> userRole = new ArrayList<>();
 
     private boolean isAccountExpired ;

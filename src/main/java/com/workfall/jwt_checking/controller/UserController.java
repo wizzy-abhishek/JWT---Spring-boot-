@@ -1,6 +1,5 @@
 package com.workfall.jwt_checking.controller;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/user")
 @RequiredArgsConstructor
 public class UserController {
-
 
     @GetMapping("/getMessage")
     public ResponseEntity<String> adminChecking(){

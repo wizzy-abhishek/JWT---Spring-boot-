@@ -1,7 +1,7 @@
 package com.workfall.jwt_checking.filter;
 
 import com.workfall.jwt_checking.entity.AppUser;
-import com.workfall.jwt_checking.document.UserPrincipal;
+import com.workfall.jwt_checking.user.UserPrincipal;
 import com.workfall.jwt_checking.repo.TokenRepo;
 import com.workfall.jwt_checking.service.AuthService;
 import com.workfall.jwt_checking.service.JwtService;
@@ -64,9 +64,9 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
                 AppUser appUser = authService.findUserByEmail(email);
                 UserPrincipal userPrincipal = new UserPrincipal(appUser);
-
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

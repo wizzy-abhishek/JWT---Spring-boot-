@@ -9,13 +9,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-/*@PreAuthorize("hasRole('ADMIN')")*/
 @RequestMapping("/admin")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     /*@Secured("ROLE_ADMIN")*/
-    @PreAuthorize("hasAuthority('ADMIN_READ')")
     @GetMapping("/getMessage")
     public ResponseEntity<String> adminChecking(){
         return ResponseEntity.ok("I am Admin");

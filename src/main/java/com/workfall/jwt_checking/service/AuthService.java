@@ -4,7 +4,7 @@ import com.workfall.jwt_checking.document.Tokens;
 import com.workfall.jwt_checking.dto.LoginResponseDTO;
 import com.workfall.jwt_checking.entity.AppUser;
 import com.workfall.jwt_checking.document.TokenMapping;
-import com.workfall.jwt_checking.document.UserPrincipal;
+import com.workfall.jwt_checking.user.UserPrincipal;
 import com.workfall.jwt_checking.dto.AppUserDTO;
 import com.workfall.jwt_checking.dto.SignUpDTO;
 import com.workfall.jwt_checking.repo.AppUserRepo;
@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -43,32 +44,33 @@ public class AuthService implements UserDetailsService {
                 .orElseThrow(()-> new BadCredentialsException("User with email : " + email + " not found")) ;
     }
 
+
+    @Transactional(rollbackFor = {Exception.class , RuntimeException.class})
     public LoginResponseDTO signUp(SignUpDTO signUpDTO){
 
         AppUser user = appUserRepo.findByEmailIgnoreCase(signUpDTO.getEmail())
                 .orElse(null);
-
         if (user != null){
             throw new BadCredentialsException("Email already present " + signUpDTO.getEmail());
         }
 
         AppUser toBeCreatedUser = returnAppUserEntity(signUpDTO);
-        TokenMapping generateTokenMapping = returnTokenMapping(signUpDTO);
-
         toBeCreatedUser.setPassword(passwordEncoder.encode(toBeCreatedUser.getPassword()));
-
         AppUser savingUser = appUserRepo.save(toBeCreatedUser);
-        savingUser.getUserRole().add(userRoleService.createUserRole(savingUser , signUpDTO.getRoles()));
+        AppUser savedAppUser = userRoleService
+                .createUserRoles(savingUser , signUpDTO.getRoles());
+
+        TokenMapping generateTokenMapping = returnTokenMapping(signUpDTO);
         tokenMappingRepo.save(generateTokenMapping);
 
-        String token = jwtService.generateAccessToken(savingUser);
+        String token = jwtService.generateAccessToken(savedAppUser);
+
         Tokens savedToken = tokenRepo.save(returnNewToken(token));
-
         TokenMapping tokenMapping = tokenMappingRepo
-                .findByEmailIgnoreCase(savingUser.getEmail());
+                .findByEmailIgnoreCase(savedAppUser.getEmail());
         tokenMapping.getTokens().add(savedToken);
-
         tokenMappingRepo.save(tokenMapping);
+
         return new LoginResponseDTO(token);
 
     }

@@ -1,8 +1,6 @@
-package com.workfall.jwt_checking.document;
+package com.workfall.jwt_checking.user;
 
 import com.workfall.jwt_checking.entity.AppUser;
-import com.workfall.jwt_checking.enums.Roles;
-import com.workfall.jwt_checking.utils.PermissionRoleMapping;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +12,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -29,12 +26,8 @@ public class UserPrincipal implements UserDetails {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
 
         appUser.getUserRole().forEach(userRole -> {
-            Roles role = userRole.getMasterRole().getRoles();
-
-            Set<SimpleGrantedAuthority> permissions = PermissionRoleMapping.getAuthorities(role);
-            authorities.addAll(permissions);
-
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
+            String roleName = userRole.getMasterRole().getRoles().name();
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
         });
 
         return authorities;
