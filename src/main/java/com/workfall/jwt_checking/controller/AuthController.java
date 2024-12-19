@@ -6,18 +6,16 @@ import com.workfall.jwt_checking.dto.LoginResponseDTO;
 import com.workfall.jwt_checking.dto.SignUpDTO;
 import com.workfall.jwt_checking.service.AuthLoginService;
 import com.workfall.jwt_checking.service.AuthService;
+import com.workfall.jwt_checking.service.MasterRoleService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Arrays;
 
 @RestController
 @RequestMapping("/auth")
@@ -26,6 +24,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final AuthLoginService authLoginService;
+    private final MasterRoleService masterRoleService ;
 
     @PostMapping("/signUp")
     public ResponseEntity<LoginResponseDTO> signUp(@RequestBody SignUpDTO signUpDTO) {
@@ -36,6 +35,11 @@ public class AuthController {
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO loginDTO) {
         LoginResponseDTO loginResponseDTO = authLoginService.login(loginDTO);
         return ResponseEntity.ok(loginResponseDTO);
+    }
+
+    @PostMapping("/masterRole")
+    public void masterRole(){
+        masterRoleService.initializeMasterRoles();
     }
 }
 

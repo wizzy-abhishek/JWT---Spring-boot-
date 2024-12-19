@@ -21,6 +21,4 @@ public class AdminController {
         return ResponseEntity.ok("I am Admin");
     }
 
-
-
 }

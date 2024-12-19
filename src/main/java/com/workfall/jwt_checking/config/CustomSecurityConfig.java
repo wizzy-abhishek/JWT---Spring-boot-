@@ -1,6 +1,5 @@
 package com.workfall.jwt_checking.config;
 
-import com.workfall.jwt_checking.enums.Roles;
 import com.workfall.jwt_checking.filter.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +22,7 @@ public class CustomSecurityConfig {
 
     private static final String[] PUBLIC_ROUTES = {
             "/error",
-            "/auth/signUp",
-            "/auth/login",
+            "/auth/**",
             "/main-controller/unauthorized-api"
     };
 

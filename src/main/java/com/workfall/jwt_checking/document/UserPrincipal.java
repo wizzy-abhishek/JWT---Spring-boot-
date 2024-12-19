@@ -1,6 +1,7 @@
 package com.workfall.jwt_checking.document;
 
 import com.workfall.jwt_checking.entity.AppUser;
+import com.workfall.jwt_checking.enums.Roles;
 import com.workfall.jwt_checking.utils.PermissionRoleMapping;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,15 +27,19 @@ public class UserPrincipal implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-        appUser.getRoles().forEach(
-                role -> {
-                    Set<SimpleGrantedAuthority> permissions = PermissionRoleMapping.getAuthorities(role);
-                    authorities.addAll(permissions);
-                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
-                }
-        );
-        return authorities ;
+
+        appUser.getUserRole().forEach(userRole -> {
+            Roles role = userRole.getMasterRole().getRoles();
+
+            Set<SimpleGrantedAuthority> permissions = PermissionRoleMapping.getAuthorities(role);
+            authorities.addAll(permissions);
+
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        });
+
+        return authorities;
     }
+
 
     @Override
     public String getPassword() {

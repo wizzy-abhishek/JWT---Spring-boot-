@@ -27,7 +27,7 @@ public class AuthService implements UserDetailsService {
     private final TokenMappingRepo tokenMappingRepo ;
     private final JwtService jwtService ;
     private final TokenRepo tokenRepo;
-
+    private final UserRoleService userRoleService ;
 
     @Override
     public UserDetails loadUserByUsername(String username) {
@@ -58,6 +58,7 @@ public class AuthService implements UserDetailsService {
         toBeCreatedUser.setPassword(passwordEncoder.encode(toBeCreatedUser.getPassword()));
 
         AppUser savingUser = appUserRepo.save(toBeCreatedUser);
+        savingUser.getUserRole().add(userRoleService.createUserRole(savingUser , signUpDTO.getRoles()));
         tokenMappingRepo.save(generateTokenMapping);
 
         String token = jwtService.generateAccessToken(savingUser);
@@ -77,7 +78,6 @@ public class AuthService implements UserDetailsService {
 
         appUser.setEmail(signUpDTO.getEmail());
         appUser.setPassword(signUpDTO.getPassword());
-        appUser.setRoles(signUpDTO.getRoles());
         appUser.setAccountExpired(false);
         appUser.setAccountLocked(false);
 
